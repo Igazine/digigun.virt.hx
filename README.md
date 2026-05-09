@@ -1,12 +1,12 @@
 # Virtualization Binding Library for Haxe
 
-**Status: ⚠️ Work in Progress - Early Development Phase**
+**Status: Work in Progress - Early Development Phase**
 
 A modern Haxe library providing high-level bindings to virtualization platforms. Currently focused on **VirtualBox** with plans to support Docker and Libvirt in future phases.
 
 ---
 
-## 🎯 Project Vision
+## Project Vision
 
 Digigun.virt.hx aims to provide a unified, type-safe interface for virtual machine control across multiple hypervisors. By leveraging Haxe's cross-platform compilation and FFI capabilities, it enables developers to write virtualization logic once and compile to multiple targets.
 
@@ -14,7 +14,7 @@ Digigun.virt.hx aims to provide a unified, type-safe interface for virtual machi
 
 ---
 
-## 📦 Features (VirtualBox)
+## Features (VirtualBox)
 
 ### VM Lifecycle Management
 - **Start/Stop Operations** - Start, pause, resume, reset, and powerdown virtual machines
@@ -50,7 +50,7 @@ Digigun.virt.hx aims to provide a unified, type-safe interface for virtual machi
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Directory Structure
 
@@ -97,7 +97,7 @@ Digigun.virt.hx aims to provide a unified, type-safe interface for virtual machi
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Haxe 4.3 or later
@@ -144,7 +144,7 @@ trace('Memory: ${hostInfo.memory.formatMemorySize()}');
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The project includes a comprehensive test suite with 8 test programs covering all major APIs:
 
@@ -169,9 +169,9 @@ Test results and detailed output are generated in `bin/app/macos/` for each plat
 
 ---
 
-## 🔧 Development Status
+## Development Status
 
-### ✅ Completed (Phase 3.1)
+### Completed (Phase 3.1)
 - [x] VirtualBox FFI layer and C bridge
 - [x] VM lifecycle control (start, stop, pause, reset)
 - [x] Machine configuration API
@@ -183,7 +183,7 @@ Test results and detailed output are generated in `bin/app/macos/` for each plat
 - [x] Professional API documentation
 - [x] Clean project structure
 
-### 🔄 In Progress / Planned
+### In Progress / Planned
 - [ ] Build system issue investigation (test executable generation)
 - [ ] Performance optimization and caching layer
 - [ ] Event system for state change notifications
@@ -191,10 +191,10 @@ Test results and detailed output are generated in `bin/app/macos/` for each plat
 - [ ] Docker support (in `.ignored/`, deferred)
 - [ ] Libvirt support (in `.ignored/`, deferred)
 
-### 📋 Known Issues
+### Known Issues
 1. **Test Executable Generation** - Haxe compilation succeeds but TestVirtualBoxHostInfo executable not generated. Investigation shows code is correct; issue is in Haxe C++ codegen. Workaround: Use individual test files.
 
-### ⚠️ Limitations
+### Limitations
 - **macOS Only (Currently)** - Tested on Apple Silicon. Linux and Windows support deferred.
 - **VirtualBox 7.x+** - Earlier versions untested.
 - **Memory Reporting** - Available memory approximated as total (can be improved).
@@ -202,7 +202,7 @@ Test results and detailed output are generated in `bin/app/macos/` for each plat
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is an early-stage project. Contributions and feedback are welcome! Key areas for contribution:
 
@@ -214,7 +214,7 @@ This is an early-stage project. Contributions and feedback are welcome! Key area
 
 ---
 
-## 📄 License
+## License
 
 MIT
 
