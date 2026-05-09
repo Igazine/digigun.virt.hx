@@ -1,4 +1,4 @@
-# Digigun Virtualization Haxe Binding
+# Virtualization Binding Library for Haxe
 
 **Status: ⚠️ Work in Progress - Early Development Phase**
 
@@ -216,7 +216,7 @@ This is an early-stage project. Contributions and feedback are welcome! Key area
 
 ## 📄 License
 
-TBD
+MIT
 
 ---
 
