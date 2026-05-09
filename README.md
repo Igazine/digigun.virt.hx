@@ -144,18 +144,6 @@ trace('Memory: ${hostInfo.memory.formatMemorySize()}');
 
 ---
 
-## 📚 API Documentation
-
-Comprehensive API documentation is available in the `.copilot/` directory:
-
-- **[HOST_INFO.md](.copilot/HOST_INFO.md)** - Host system information and metrics
-- **[VM_LIFECYCLE.md](.copilot/VM_LIFECYCLE.md)** - Virtual machine control operations
-- **[MACHINE_CONFIGURATION.md](.copilot/MACHINE_CONFIGURATION.md)** - VM hardware configuration
-- **[SNAPSHOTS.md](.copilot/SNAPSHOTS.md)** - Snapshot management API
-- **[MEDIA_STORAGE.md](.copilot/MEDIA_STORAGE.md)** - Disk and storage management
-
----
-
 ## 🧪 Testing
 
 The project includes a comprehensive test suite with 8 test programs covering all major APIs:
