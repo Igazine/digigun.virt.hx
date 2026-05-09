@@ -8,7 +8,7 @@ A modern Haxe library providing high-level bindings to virtualization platforms.
 
 ## 🎯 Project Vision
 
-Digigun aims to provide a unified, type-safe interface for virtual machine control across multiple hypervisors. By leveraging Haxe's cross-platform compilation and FFI capabilities, it enables developers to write virtualization logic once and compile to multiple targets.
+Digigun.virt.hx aims to provide a unified, type-safe interface for virtual machine control across multiple hypervisors. By leveraging Haxe's cross-platform compilation and FFI capabilities, it enables developers to write virtualization logic once and compile to multiple targets.
 
 **Current Focus:** VirtualBox support with a complete, production-ready API.
 
