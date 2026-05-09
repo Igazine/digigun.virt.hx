@@ -1,0 +1,12 @@
+{
+    "name": "digigun.virt.hx",
+    "url" : "https://github.com/igazine/digigun.virt.hx/",
+    "license": "Public",
+    "tags": ["digigun", "haxe", "virtualization", "libvirt", "docker"],
+    "description": "Haxe Virtualization Library",
+    "version": "0.0.1",
+    "classPath": "src/",
+    "dependencies": { "digigun.core.hx": "" },
+    "releasenote": "Initial release",
+    "contributors": ["Igazine"]
+}

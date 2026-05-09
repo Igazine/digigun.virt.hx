@@ -1,0 +1,26 @@
+<xml>
+    <include name="${HXCPP}/build-tool/BuildCommon.xml"/>
+
+    <set name="VBOX_SDK_PATH" value="${DIGIGUN.VIRT.VIRTUALBOX.SDKPATH}" if="DIGIGUN.VIRT.VIRTUALBOX.SDKPATH"/>
+    <set name="VBOX_SDK_PATH" value="${DIGIGUN_VIRT_VIRTUALBOX_SDKPATH}" if="DIGIGUN_VIRT_VIRTUALBOX_SDKPATH"/>
+    <set name="VBOX_SDK_PATH" value="/Volumes/Work/sdk/vbox" unless="VBOX_SDK_PATH"/>
+
+    <files id="native-virtualbox">
+        <compilerflag value="-I${haxelib:digigun.virt.hx}/native/virtualbox/include"/>
+        <compilerflag value="-I${VBOX_SDK_PATH}/bindings/c/include"/>
+        <compilerflag value="-I${VBOX_SDK_PATH}/bindings/c/glue"/>
+        <file name="${VBOX_SDK_PATH}/bindings/c/glue/VBoxCAPIGlue.c"/>
+        <file name="${VBOX_SDK_PATH}/bindings/xpcom/lib/VirtualBox_i.c"/>
+        <file name="${haxelib:digigun.virt.hx}/native/virtualbox/src/virtualbox_bridge.c"/>
+    </files>
+
+    <files id="haxe">
+        <compilerflag value="-I${haxelib:digigun.virt.hx}/native/virtualbox/include"/>
+        <compilerflag value="-I${VBOX_SDK_PATH}/bindings/c/include"/>
+        <compilerflag value="-I${VBOX_SDK_PATH}/bindings/c/glue"/>
+    </files>
+
+    <target id="haxe">
+        <files id="native-virtualbox"/>
+    </target>
+</xml>
