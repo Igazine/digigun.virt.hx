@@ -220,12 +220,6 @@ TBD
 
 ---
 
-## 📞 Support & Questions
-
-For detailed technical information, see the documentation in `.copilot/` directory. For issues or questions, please refer to the development checkpoint files for context on design decisions and known limitations.
-
----
-
 **Last Updated:** May 9, 2026  
 **Development Phase:** 3.1 (Host Information API)  
 **Stability:** Early - Use with caution in production environments
