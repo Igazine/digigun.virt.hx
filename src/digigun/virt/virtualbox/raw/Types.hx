@@ -228,4 +228,19 @@ extern class NativeProcessorInfo {
     @:native("errorCode") var errorCode:Int;
     @:native("errorMessage") var errorMessage:cpp.ConstCharStar;
 }
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxResourceMetrics")
+@:structAccess
+@:noDoc
+extern class NativeResourceMetrics {
+    @:native("success") var success:Int;
+    @:native("timestamp") var timestamp:cpp.Int64;
+    @:native("cpuUsagePercent") var cpuUsagePercent:cpp.Float32;
+    @:native("memoryUsedMB") var memoryUsedMB:cpp.UInt32;
+    @:native("cpuCount") var cpuCount:cpp.UInt32;
+    @:native("activeThreads") var activeThreads:cpp.UInt32;
+    @:native("errorCode") var errorCode:Int;
+    @:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
 #end

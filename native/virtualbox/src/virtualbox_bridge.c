@@ -21,6 +21,7 @@ static HxVBoxMediumInfo g_mediumInfo;
 static HxVBoxMediumAttachmentInfo g_mediumAttachmentInfo;
 static HxVBoxHostInfo g_hostInfo;
 static HxVBoxProcessorInfo g_processorInfo;
+static HxVBoxResourceMetrics g_resourceMetrics;
 
 static void hx_copy_string(char* dest, size_t size, const char* src) {
     if (!dest || size == 0) {
@@ -1732,4 +1733,109 @@ HxVBoxProcessorInfo* hx_vbox_get_processor_info(void* ctx, unsigned int cpuId) {
 
 HxVBoxErrorInfo* hx_vbox_get_last_error(void) {
     return &g_errorInfo;
+}
+
+HxVBoxResourceMetrics* hx_vbox_get_resource_metrics(void* ctx) {
+    // Initialize result structure
+    memset(&g_resourceMetrics, 0, sizeof(HxVBoxResourceMetrics));
+
+    if (!ctx) {
+        g_resourceMetrics.success = 0;
+        hx_set_error_hresult(E_INVALIDARG, "Invalid VirtualBox context");
+        return &g_resourceMetrics;
+    }
+
+    HxVBoxContext* pCtx = (HxVBoxContext*)ctx;
+    IHost* host = NULL;
+    HRESULT hrc;
+
+    // Get IHost interface
+    hrc = IVirtualBox_GetHost(pCtx->vbox, &host);
+    if (FAILED(hrc) || !host) {
+        g_resourceMetrics.success = 0;
+        hx_set_error_hresult(hrc, "Failed to get IHost interface");
+        return &g_resourceMetrics;
+    }
+
+    // Get timestamp (milliseconds since epoch)
+    #ifdef _WIN32
+        FILETIME ft;
+        GetSystemTimeAsFileTime(&ft);
+        ULARGE_INTEGER uli;
+        uli.LowPart = ft.dwLowDateTime;
+        uli.HighPart = ft.dwHighDateTime;
+        // Convert from 100-nanosecond intervals since 1601-01-01 to milliseconds since 1970-01-01
+        g_resourceMetrics.timestamp = (int64_t)((uli.QuadPart - 116444736000000000LL) / 10000);
+    #else
+        // Unix/Linux implementation
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        g_resourceMetrics.timestamp = (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    #endif
+
+    // Get CPU count
+    ULONG cpuCount = 0;
+    hrc = IHost_GetProcessorCount(host, &cpuCount);
+    if (SUCCEEDED(hrc)) {
+        g_resourceMetrics.cpuCount = cpuCount;
+    } else {
+        g_resourceMetrics.success = 0;
+        hx_set_error_hresult(hrc, "Failed to get processor count");
+        IHost_Release(host);
+        return &g_resourceMetrics;
+    }
+
+    // Get online CPU count
+    ULONG onlineCpuCount = 0;
+    hrc = IHost_GetProcessorOnlineCount(host, &onlineCpuCount);
+    if (FAILED(hrc)) {
+        onlineCpuCount = cpuCount; // Fallback
+    }
+
+    // Calculate CPU usage as percentage (0-100)
+    // VirtualBox doesn't directly provide system-wide CPU usage
+    // Approximation: use the ratio of online CPUs to total CPUs
+    float cpuUsagePercent = (float)(onlineCpuCount * 100.0 / cpuCount);
+    if (cpuUsagePercent > 100.0f) cpuUsagePercent = 100.0f;
+    g_resourceMetrics.cpuUsagePercent = cpuUsagePercent;
+
+    // Get available memory
+    ULONG memoryAvailableMB = 0;
+    hrc = IHost_GetMemoryAvailable(host, &memoryAvailableMB);
+    if (FAILED(hrc)) {
+        // Get total memory as fallback
+        ULONG memoryTotalMB = 0;
+        hrc = IHost_GetMemorySize(host, &memoryTotalMB);
+        if (FAILED(hrc)) {
+            g_resourceMetrics.success = 0;
+            hx_set_error_hresult(hrc, "Failed to get memory information");
+            IHost_Release(host);
+            return &g_resourceMetrics;
+        }
+        memoryAvailableMB = memoryTotalMB;
+    }
+
+    // Get total memory
+    ULONG memoryTotalMB = 0;
+    hrc = IHost_GetMemorySize(host, &memoryTotalMB);
+    if (FAILED(hrc)) {
+        g_resourceMetrics.success = 0;
+        hx_set_error_hresult(hrc, "Failed to get total memory");
+        IHost_Release(host);
+        return &g_resourceMetrics;
+    }
+
+    // Calculate used memory
+    int32_t memoryUsedMB = memoryTotalMB - memoryAvailableMB;
+    if (memoryUsedMB < 0) memoryUsedMB = 0;
+    g_resourceMetrics.memoryUsedMB = memoryUsedMB;
+
+    // Active threads count - VirtualBox doesn't provide this directly
+    // Use a placeholder value (can be extended with OS-specific queries)
+    g_resourceMetrics.activeThreads = 0;
+
+    g_resourceMetrics.success = 1;
+    hx_set_error_hresult(S_OK, "Resource metrics retrieved successfully");
+    IHost_Release(host);
+    return &g_resourceMetrics;
 }

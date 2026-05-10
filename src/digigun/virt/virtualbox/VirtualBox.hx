@@ -776,5 +776,50 @@ class VirtualBox {
         throw new ConnectionError("Processor information requires CPP target");
         #end
     }
+
+    /**
+     * Get a snapshot of current system resource metrics.
+     * 
+     * Captures CPU and memory usage at the current point in time.
+     * Can be used for real-time monitoring and trend analysis.
+     * 
+     * @return HostResourceSnapshot with current metrics
+     * @throws ConnectionError If VirtualBox connection is invalid
+     * 
+     * Example:
+     * ```haxe
+     * var vbox = VirtualBox.open();
+     * var snapshot = vbox.getResourceSnapshot();
+     * trace(snapshot.getMetricsSummary());
+     * // Output: "CPU: 45.2%, Memory: 8192 MB, Threads: 1024"
+     * vbox.close();
+     * ```
+     */
+    public function getResourceSnapshot():HostResourceSnapshot {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var raw = Native.getResourceMetrics(handle);
+        ErrorHelper.checkPointerOrThrow(raw, "getResourceSnapshot", null);
+        
+        var nativeMetrics:NativeResourceMetrics = Pointer.fromRaw(raw).value;
+        if (nativeMetrics.success == 0) {
+            var msg = ErrorHelper.toNullableString(nativeMetrics.errorMessage) ?? "Failed to get resource metrics";
+            throw new ConnectionError(msg);
+        }
+        
+        return new HostResourceSnapshot(
+            cast nativeMetrics.timestamp,
+            cast nativeMetrics.cpuUsagePercent,
+            cast nativeMetrics.memoryUsedMB,
+            cast nativeMetrics.cpuCount,
+            cast nativeMetrics.activeThreads
+        );
+        #else
+        throw new ConnectionError("Resource monitoring requires CPP target");
+        #end
+    }
 }
 

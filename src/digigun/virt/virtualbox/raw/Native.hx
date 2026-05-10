@@ -16,6 +16,7 @@ import digigun.virt.virtualbox.raw.Types.NativeMediumAttachmentEntry;
 import digigun.virt.virtualbox.raw.Types.NativeMediumAttachmentInfo;
 import digigun.virt.virtualbox.raw.Types.NativeHostInfo;
 import digigun.virt.virtualbox.raw.Types.NativeProcessorInfo;
+import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
 
 @:include("virtualbox_bridge.h")
 @:noDoc
@@ -150,5 +151,8 @@ extern class Native {
 
     @:native("hx_vbox_get_processor_info")
     static function getProcessorInfo(ctx:cpp.RawPointer<cpp.Void>, cpuId:UInt):cpp.RawPointer<NativeProcessorInfo>;
+
+    // Resource monitoring operations
+    @:native("hx_vbox_get_resource_metrics")
+    static function getResourceMetrics(ctx:cpp.RawPointer<cpp.Void>):cpp.RawPointer<NativeResourceMetrics>;
 }
-#end

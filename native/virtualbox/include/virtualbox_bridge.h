@@ -173,6 +173,17 @@ typedef struct HxVBoxProcessorInfo {
     char errorMessage[1024];
 } HxVBoxProcessorInfo;
 
+typedef struct HxVBoxResourceMetrics {
+    int success;
+    int64_t timestamp;
+    float cpuUsagePercent;
+    uint32_t memoryUsedMB;
+    uint32_t cpuCount;
+    uint32_t activeThreads;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxResourceMetrics;
+
 void* hx_vbox_open(void);
 void hx_vbox_close(void* ctx);
 HxVBoxVersionInfo* hx_vbox_get_version_info(void* ctx);
@@ -219,6 +230,9 @@ int hx_vbox_session_detach_medium(void* ctx, const char* mediumId);
 // Host information operations
 HxVBoxHostInfo* hx_vbox_get_host_info(void* ctx);
 HxVBoxProcessorInfo* hx_vbox_get_processor_info(void* ctx, unsigned int cpuId);
+
+// Resource monitoring operations
+HxVBoxResourceMetrics* hx_vbox_get_resource_metrics(void* ctx);
 
 void hx_vbox_machine_list_free(HxVBoxMachineEntry* list);
 void hx_vbox_snapshot_list_free(HxVBoxSnapshotEntry* list);
