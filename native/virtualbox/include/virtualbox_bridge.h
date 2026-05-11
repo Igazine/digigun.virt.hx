@@ -201,6 +201,15 @@ typedef struct HxVBoxEventSubscription {
     char errorMessage[1024];
 } HxVBoxEventSubscription;
 
+typedef struct HxVBoxCloneResult {
+    int success;
+    char clonedMachineId[256];
+    char clonedMachineName[256];
+    int progressPercent;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxCloneResult;
+
 void* hx_vbox_open(void);
 void hx_vbox_close(void* ctx);
 HxVBoxVersionInfo* hx_vbox_get_version_info(void* ctx);
@@ -257,6 +266,10 @@ int hx_vbox_unregister_event_listener(void* ctx, int64_t subscriptionId);
 HxVBoxEvent* hx_vbox_poll_event(void* ctx, int64_t subscriptionId);
 void hx_vbox_event_free(HxVBoxEvent* event);
 void hx_vbox_event_subscription_free(HxVBoxEventSubscription* sub);
+
+// Machine cloning operations
+HxVBoxCloneResult* hx_vbox_clone_machine(void* ctx, const char* machineId, const char* targetName, const char* cloneMode, int cloneSnapshots);
+void hx_vbox_clone_result_free(HxVBoxCloneResult* result);
 
 void hx_vbox_machine_list_free(HxVBoxMachineEntry* list);
 void hx_vbox_snapshot_list_free(HxVBoxSnapshotEntry* list);

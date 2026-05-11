@@ -19,6 +19,7 @@ import digigun.virt.virtualbox.raw.Types.NativeProcessorInfo;
 import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
 import digigun.virt.virtualbox.raw.Types.NativeEvent;
 import digigun.virt.virtualbox.raw.Types.NativeEventSubscription;
+import digigun.virt.virtualbox.raw.Types.NativeCloneResult;
 
 @:include("virtualbox_bridge.h")
 @:noDoc
@@ -173,5 +174,12 @@ extern class Native {
 
     @:native("hx_vbox_event_subscription_free")
     static function eventSubscriptionFree(sub:cpp.RawPointer<NativeEventSubscription>):Void;
+
+    // Machine cloning operations
+    @:native("hx_vbox_clone_machine")
+    static function cloneMachine(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar, targetName:cpp.ConstCharStar, cloneMode:cpp.ConstCharStar, cloneSnapshots:Int):cpp.RawPointer<NativeCloneResult>;
+
+    @:native("hx_vbox_clone_result_free")
+    static function cloneResultFree(result:cpp.RawPointer<NativeCloneResult>):Void;
 }
 #end

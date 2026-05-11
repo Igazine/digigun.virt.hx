@@ -11,6 +11,7 @@ import digigun.virt.virtualbox.raw.Types.NativeVersionInfo;
 import digigun.virt.virtualbox.raw.Types.NativeHostInfo;
 import digigun.virt.virtualbox.raw.Types.NativeProcessorInfo;
 import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
+import digigun.virt.virtualbox.raw.Types.NativeCloneResult;
 #end
 
 /// Version and API information for the installed VirtualBox
@@ -888,6 +889,93 @@ class VirtualBox {
             }
         }
         return subscribers;
+    }
+
+    /**
+        Clone a machine with specified options.
+        
+        Creates a new virtual machine as a copy of the source machine.
+        Supports three cloning modes:
+        - Full: Complete independent copy (largest, slowest)
+        - Linked: Shared snapshots with parent (medium, medium speed)
+        - Shallow: Shared virtual disks (smallest, fastest)
+        
+        @param sourceMachine The machine to clone from
+        @param options Clone options (target name, mode, snapshot flags)
+        @param progressCallback Optional callback for progress tracking
+        @return The newly created cloned machine
+        @throws Error If clone operation fails
+    **/
+    public function cloneMachine(sourceMachine:Machine, options:MachineCloneOptions, ?progressCallback:CloneProgressCallback):Machine {
+        if (!options.isValid()) {
+            throw new haxe.Exception("Invalid clone options: " + options.description());
+        }
+        
+        #if cpp
+        try {
+            if (progressCallback != null) {
+                progressCallback.onCloneStart(options.targetName, options.mode);
+            }
+            
+            final modeStr = Std.string(options.mode);
+            final snapshotsFlag = options.cloneSnapshots ? 1 : 0;
+            final resultPtr = Native.cloneMachine(handle, sourceMachine.id, options.targetName, modeStr, snapshotsFlag);
+            
+            if (resultPtr == null) {
+                throw new haxe.Exception("Failed to clone machine: native operation returned null");
+            }
+            
+            final result:NativeCloneResult = Pointer.fromRaw(resultPtr).value;
+            
+            if (result.success == 0) {
+                final errorMsgStr = cpp.ConstCharStar.fromString(result.errorMessage).toString();
+                final errorMsg = errorMsgStr.length > 0 ? errorMsgStr : "Unknown error";
+                Native.cloneResultFree(resultPtr);
+                
+                if (progressCallback != null) {
+                    progressCallback.onCloneError(options.targetName, result.errorCode, errorMsg);
+                }
+                throw new haxe.Exception("Clone failed: [" + result.errorCode + "] " + errorMsg);
+            }
+            
+            final clonedId = cpp.ConstCharStar.fromString(result.clonedMachineId).toString();
+            final clonedName = cpp.ConstCharStar.fromString(result.clonedMachineName).toString();
+            
+            Native.cloneResultFree(resultPtr);
+            
+            if (progressCallback != null) {
+                progressCallback.onCloneComplete(clonedName, clonedId);
+            }
+            
+            // Load the cloned machine's info via findMachine
+            final machine = findMachine(clonedId);
+            return machine;
+        } catch (e:Dynamic) {
+            if (progressCallback != null && Std.is(e, haxe.Exception)) {
+                progressCallback.onCloneError(options.targetName, -1, Std.string(e));
+            }
+            throw e;
+        }
+        #else
+        throw new haxe.Exception("Machine cloning requires native C++ backend");
+        #end
+    }
+
+    /**
+        Clone a machine and return by name lookup.
+        
+        Convenience method that looks up target machine by name after cloning.
+        
+        @param sourceMachine The machine to clone from
+        @param targetName Target VM name for clone
+        @param mode Clone mode (Full/Linked/Shallow)
+        @param cloneSnapshots Whether to clone snapshots
+        @return The newly created cloned machine
+        @throws Error If source machine not found or clone fails
+    **/
+    public function cloneMachineSimple(sourceMachine:Machine, targetName:String, mode:MachineCloneMode, cloneSnapshots:Bool = true):Machine {
+        final options = new MachineCloneOptions(targetName, mode, cloneSnapshots);
+        return cloneMachine(sourceMachine, options);
     }
 
     /**

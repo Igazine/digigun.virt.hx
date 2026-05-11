@@ -263,9 +263,22 @@ extern class NativeEvent {
 @:structAccess
 @:noDoc
 extern class NativeEventSubscription {
-    @:native("success") var success:Int;
-    @:native("subscriptionId") var subscriptionId:cpp.Int64;
-    @:native("errorCode") var errorCode:Int;
-    @:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+	@:native("success") var success:Int;
+	@:native("subscriptionId") var subscriptionId:cpp.Int64;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxCloneResult")
+@:structAccess
+@:noDoc
+extern class NativeCloneResult {
+	@:native("success") var success:Int;
+	@:native("clonedMachineId") var clonedMachineId:cpp.ConstCharStar;
+	@:native("clonedMachineName") var clonedMachineName:cpp.ConstCharStar;
+	@:native("progressPercent") var progressPercent:Int;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
 }
 #end
