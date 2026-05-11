@@ -6,7 +6,7 @@
     "description": "Haxe Virtualization Library",
     "version": "0.0.1",
     "classPath": "src/",
-    "dependencies": { "digigun.core.hx": "" },
+    "dependencies": { },
     "releasenote": "Initial release",
     "contributors": ["Igazine"]
 }
