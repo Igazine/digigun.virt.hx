@@ -243,4 +243,29 @@ extern class NativeResourceMetrics {
     @:native("errorCode") var errorCode:Int;
     @:native("errorMessage") var errorMessage:cpp.ConstCharStar;
 }
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxEvent")
+@:structAccess
+@:noDoc
+extern class NativeEvent {
+    @:native("success") var success:Int;
+    @:native("eventType") var eventType:cpp.ConstCharStar;
+    @:native("timestamp") var timestamp:cpp.Int64;
+    @:native("vmName") var vmName:cpp.ConstCharStar;
+    @:native("description") var description:cpp.ConstCharStar;
+    @:native("errorCode") var errorCode:Int;
+    @:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxEventSubscription")
+@:structAccess
+@:noDoc
+extern class NativeEventSubscription {
+    @:native("success") var success:Int;
+    @:native("subscriptionId") var subscriptionId:cpp.Int64;
+    @:native("errorCode") var errorCode:Int;
+    @:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
 #end

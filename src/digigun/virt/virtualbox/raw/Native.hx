@@ -17,6 +17,8 @@ import digigun.virt.virtualbox.raw.Types.NativeMediumAttachmentInfo;
 import digigun.virt.virtualbox.raw.Types.NativeHostInfo;
 import digigun.virt.virtualbox.raw.Types.NativeProcessorInfo;
 import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
+import digigun.virt.virtualbox.raw.Types.NativeEvent;
+import digigun.virt.virtualbox.raw.Types.NativeEventSubscription;
 
 @:include("virtualbox_bridge.h")
 @:noDoc
@@ -155,4 +157,21 @@ extern class Native {
     // Resource monitoring operations
     @:native("hx_vbox_get_resource_metrics")
     static function getResourceMetrics(ctx:cpp.RawPointer<cpp.Void>):cpp.RawPointer<NativeResourceMetrics>;
+
+    // Event operations
+    @:native("hx_vbox_register_event_listener")
+    static function registerEventListener(ctx:cpp.RawPointer<cpp.Void>, eventType:cpp.ConstCharStar):cpp.RawPointer<NativeEventSubscription>;
+
+    @:native("hx_vbox_unregister_event_listener")
+    static function unregisterEventListener(ctx:cpp.RawPointer<cpp.Void>, subscriptionId:cpp.Int64):Int;
+
+    @:native("hx_vbox_poll_event")
+    static function pollEvent(ctx:cpp.RawPointer<cpp.Void>, subscriptionId:cpp.Int64):cpp.RawPointer<NativeEvent>;
+
+    @:native("hx_vbox_event_free")
+    static function eventFree(event:cpp.RawPointer<NativeEvent>):Void;
+
+    @:native("hx_vbox_event_subscription_free")
+    static function eventSubscriptionFree(sub:cpp.RawPointer<NativeEventSubscription>):Void;
 }
+#end

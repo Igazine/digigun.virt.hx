@@ -184,6 +184,23 @@ typedef struct HxVBoxResourceMetrics {
     char errorMessage[1024];
 } HxVBoxResourceMetrics;
 
+typedef struct HxVBoxEvent {
+    int success;
+    char eventType[128];
+    int64_t timestamp;
+    char vmName[256];
+    char description[1024];
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxEvent;
+
+typedef struct HxVBoxEventSubscription {
+    int success;
+    int64_t subscriptionId;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxEventSubscription;
+
 void* hx_vbox_open(void);
 void hx_vbox_close(void* ctx);
 HxVBoxVersionInfo* hx_vbox_get_version_info(void* ctx);
@@ -233,6 +250,13 @@ HxVBoxProcessorInfo* hx_vbox_get_processor_info(void* ctx, unsigned int cpuId);
 
 // Resource monitoring operations
 HxVBoxResourceMetrics* hx_vbox_get_resource_metrics(void* ctx);
+
+// Event operations
+HxVBoxEventSubscription* hx_vbox_register_event_listener(void* ctx, const char* eventType);
+int hx_vbox_unregister_event_listener(void* ctx, int64_t subscriptionId);
+HxVBoxEvent* hx_vbox_poll_event(void* ctx, int64_t subscriptionId);
+void hx_vbox_event_free(HxVBoxEvent* event);
+void hx_vbox_event_subscription_free(HxVBoxEventSubscription* sub);
 
 void hx_vbox_machine_list_free(HxVBoxMachineEntry* list);
 void hx_vbox_snapshot_list_free(HxVBoxSnapshotEntry* list);

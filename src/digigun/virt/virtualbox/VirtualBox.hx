@@ -10,6 +10,7 @@ import digigun.virt.virtualbox.raw.Types.NativeProgressInfo;
 import digigun.virt.virtualbox.raw.Types.NativeVersionInfo;
 import digigun.virt.virtualbox.raw.Types.NativeHostInfo;
 import digigun.virt.virtualbox.raw.Types.NativeProcessorInfo;
+import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
 #end
 
 /// Version and API information for the installed VirtualBox
@@ -820,6 +821,116 @@ class VirtualBox {
         #else
         throw new ConnectionError("Resource monitoring requires CPP target");
         #end
+    }
+
+    /**
+        Subscribe to a specific VirtualBox event type.
+        
+        Returns a HostEventSubscriber instance that manages the subscription.
+        Register listeners with addListener(), then call start() to begin receiving events.
+        Poll for events with pollAndDispatch() or pollAllAndDispatch().
+        
+        ```haxe
+        var subscriber = vbox.subscribeToEvent(EventType.VM_STARTED);
+        subscriber.addListener(function(event) {
+            trace('VM started: ${event.vmName}');
+        });
+        subscriber.start();
+        subscriber.pollAndDispatch();
+        ```
+        
+        @param eventType The type of events to subscribe to
+        @return HostEventSubscriber instance for managing the subscription
+        @throws ConnectionError if connection not open or subscription fails
+    **/
+    public function subscribeToEvent(eventType:EventType):HostEventSubscriber {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var subscriber = new HostEventSubscriber(eventType, handle);
+        if (!subscriber.start()) {
+            throw new ConnectionError(ErrorHelper.getLastErrorMessage());
+        }
+        
+        return subscriber;
+        #else
+        throw new ConnectionError("Event system requires CPP target");
+        #end
+    }
+
+    /**
+        Subscribe to multiple event types at once.
+        
+        Returns an array of HostEventSubscriber instances, one for each event type.
+        All subscribers are automatically started.
+        
+        @param eventTypes Array of event types to subscribe to
+        @return Array of HostEventSubscriber instances
+        @throws ConnectionError if subscription fails
+    **/
+    public function subscribeToEvents(eventTypes:Array<EventType>):Array<HostEventSubscriber> {
+        if (eventTypes == null || eventTypes.length == 0) {
+            return [];
+        }
+        
+        var subscribers:Array<HostEventSubscriber> = [];
+        for (eventType in eventTypes) {
+            try {
+                subscribers.push(subscribeToEvent(eventType));
+            } catch (e:Dynamic) {
+                // Cleanup already-subscribed events on failure
+                for (sub in subscribers) {
+                    sub.dispose();
+                }
+                throw e;
+            }
+        }
+        return subscribers;
+    }
+
+    /**
+        Create a listener that filters events by event type.
+        
+        @param eventType The event type to listen for
+        @param callback Function to call when event occurs
+        @return EventListener that only handles matching events
+    **/
+    public static function createEventListener(eventType:EventType, callback:HostEvent -> Void):EventListener {
+        return EventListener.filtered(eventType, callback);
+    }
+
+    /**
+        Create a listener that filters events by VM name.
+        
+        @param vmName The VM name to listen for
+        @param callback Function to call when event occurs
+        @return EventListener that only handles events from that VM
+    **/
+    public static function createVMEventListener(vmName:String, callback:HostEvent -> Void):EventListener {
+        return EventListener.forVM(vmName, callback);
+    }
+
+    /**
+        Create a listener that filters events by category.
+        
+        @param category The event category (e.g., "VM Lifecycle", "Snapshots")
+        @param callback Function to call when event occurs
+        @return EventListener that only handles matching categories
+    **/
+    public static function createCategoryEventListener(category:String, callback:HostEvent -> Void):EventListener {
+        return EventListener.byCategory(category, callback);
+    }
+
+    /**
+        Create a listener that only handles critical events.
+        
+        @param callback Function to call when critical event occurs
+        @return EventListener that only handles critical events
+    **/
+    public static function createCriticalEventListener(callback:HostEvent -> Void):EventListener {
+        return EventListener.critical(callback);
     }
 }
 

@@ -4,6 +4,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
 
 typedef struct HxVBoxContext {
     IVirtualBoxClient* client;
@@ -1838,4 +1845,155 @@ HxVBoxResourceMetrics* hx_vbox_get_resource_metrics(void* ctx) {
     hx_set_error_hresult(S_OK, "Resource metrics retrieved successfully");
     IHost_Release(host);
     return &g_resourceMetrics;
+}
+
+// Event handling structures and functions
+typedef struct HxEventQueueEntry {
+    HxVBoxEvent event;
+    struct HxEventQueueEntry* next;
+} HxEventQueueEntry;
+
+typedef struct HxEventQueue {
+    HxEventQueueEntry* head;
+    HxEventQueueEntry* tail;
+    int count;
+} HxEventQueue;
+
+typedef struct HxEventSubscriptionData {
+    int64_t subscriptionId;
+    char eventType[128];
+    HxEventQueue eventQueue;
+    int active;
+} HxEventSubscriptionData;
+
+// Simple subscription registry (limited to 32 active subscriptions)
+#define MAX_EVENT_SUBSCRIPTIONS 32
+static HxEventSubscriptionData g_subscriptions[MAX_EVENT_SUBSCRIPTIONS];
+static int g_subscriptionCount = 0;
+static int64_t g_nextSubscriptionId = 1;
+static HxVBoxEvent g_eventBuffer;
+static HxVBoxEventSubscription g_subscriptionBuffer;
+
+HxVBoxEventSubscription* hx_vbox_register_event_listener(void* ctx, const char* eventType) {
+    if (!eventType || g_subscriptionCount >= MAX_EVENT_SUBSCRIPTIONS) {
+        g_subscriptionBuffer.success = 0;
+        g_subscriptionBuffer.subscriptionId = 0;
+        hx_set_error_message(1050, "Cannot register event listener: max subscriptions reached or invalid type");
+        return &g_subscriptionBuffer;
+    }
+
+    // Create new subscription entry
+    HxEventSubscriptionData* sub = &g_subscriptions[g_subscriptionCount];
+    sub->subscriptionId = g_nextSubscriptionId++;
+    hx_copy_string(sub->eventType, sizeof(sub->eventType), eventType);
+    sub->eventQueue.head = NULL;
+    sub->eventQueue.tail = NULL;
+    sub->eventQueue.count = 0;
+    sub->active = 1;
+    g_subscriptionCount++;
+
+    g_subscriptionBuffer.success = 1;
+    g_subscriptionBuffer.subscriptionId = sub->subscriptionId;
+    hx_set_error_hresult(S_OK, "Event listener registered successfully");
+    return &g_subscriptionBuffer;
+}
+
+int hx_vbox_unregister_event_listener(void* ctx, int64_t subscriptionId) {
+    for (int i = 0; i < g_subscriptionCount; i++) {
+        if (g_subscriptions[i].subscriptionId == subscriptionId && g_subscriptions[i].active) {
+            // Clear event queue
+            HxEventQueueEntry* entry = g_subscriptions[i].eventQueue.head;
+            while (entry) {
+                HxEventQueueEntry* next = entry->next;
+                free(entry);
+                entry = next;
+            }
+
+            // Mark as inactive
+            g_subscriptions[i].active = 0;
+            hx_set_error_hresult(S_OK, "Event listener unregistered successfully");
+            return 0;
+        }
+    }
+
+    hx_set_error_message(1051, "Subscription not found");
+    return 1;
+}
+
+// Internal function to enqueue an event
+static void hx_enqueue_event(HxEventSubscriptionData* sub, const char* eventType, const char* vmName, const char* description) {
+    if (sub->eventQueue.count >= 100) { // Max 100 events per subscription
+        // Drop oldest event
+        HxEventQueueEntry* head = sub->eventQueue.head;
+        sub->eventQueue.head = head->next;
+        free(head);
+        sub->eventQueue.count--;
+    }
+
+    HxEventQueueEntry* entry = (HxEventQueueEntry*)malloc(sizeof(HxEventQueueEntry));
+    if (!entry) {
+        return;
+    }
+
+    memset(&entry->event, 0, sizeof(HxVBoxEvent));
+    entry->event.success = 1;
+    hx_copy_string(entry->event.eventType, sizeof(entry->event.eventType), eventType);
+    hx_copy_string(entry->event.vmName, sizeof(entry->event.vmName), vmName);
+    hx_copy_string(entry->event.description, sizeof(entry->event.description), description);
+    
+    // Get current timestamp
+    #ifdef _WIN32
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    ULONGLONG ull = (((ULONGLONG)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+    entry->event.timestamp = (int64_t)(ull / 10000 - 11644473600000LL);
+    #else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    entry->event.timestamp = (int64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+    #endif
+
+    entry->next = NULL;
+
+    if (sub->eventQueue.tail) {
+        sub->eventQueue.tail->next = entry;
+    } else {
+        sub->eventQueue.head = entry;
+    }
+    sub->eventQueue.tail = entry;
+    sub->eventQueue.count++;
+}
+
+HxVBoxEvent* hx_vbox_poll_event(void* ctx, int64_t subscriptionId) {
+    for (int i = 0; i < g_subscriptionCount; i++) {
+        if (g_subscriptions[i].subscriptionId == subscriptionId && g_subscriptions[i].active) {
+            HxEventQueueEntry* head = g_subscriptions[i].eventQueue.head;
+            if (!head) {
+                return NULL; // No events available
+            }
+
+            // Copy event to buffer
+            memcpy(&g_eventBuffer, &head->event, sizeof(HxVBoxEvent));
+
+            // Remove from queue
+            g_subscriptions[i].eventQueue.head = head->next;
+            if (!g_subscriptions[i].eventQueue.head) {
+                g_subscriptions[i].eventQueue.tail = NULL;
+            }
+            g_subscriptions[i].eventQueue.count--;
+            free(head);
+
+            return &g_eventBuffer;
+        }
+    }
+
+    return NULL;
+}
+
+void hx_vbox_event_free(HxVBoxEvent* event) {
+    // No-op: events are allocated from static buffer
+}
+
+void hx_vbox_event_subscription_free(HxVBoxEventSubscription* sub) {
+    // No-op: subscriptions are allocated from static buffer
 }
