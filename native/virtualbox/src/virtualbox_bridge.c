@@ -2145,3 +2145,59 @@ void hx_vbox_virtual_network_free(HxVBoxVirtualNetwork* network) {
 void hx_vbox_virtual_network_list_free(HxVBoxVirtualNetworkList* list) {
     // No-op: list allocated from static buffer
 }
+
+// Display operations
+HxVBoxRemoteDisplayInfo* hx_vbox_get_remote_display_info(void* ctx, const char* machineId) {
+    HxVBoxRemoteDisplayInfo* info = (HxVBoxRemoteDisplayInfo*)malloc(sizeof(HxVBoxRemoteDisplayInfo));
+    if (info) {
+        info->success = 0;
+        info->rdpEnabled = 0;
+        info->rdpPort = 0;
+        info->vncEnabled = 0;
+        info->vncPort = 0;
+        strcpy(info->vncAddress, "");
+        info->displayWidth = 0;
+        info->displayHeight = 0;
+        info->displayBitDepth = 0;
+        info->guestResizableDisplay = 0;
+        strcpy(info->displayId, "0");
+        info->errorCode = -1;
+        strcpy(info->errorMessage, "Display info not yet implemented");
+    }
+    return info;
+}
+
+HxVBoxDisplayFrameBuffer* hx_vbox_get_display_framebuffer(void* ctx, const char* machineId, int displayIndex) {
+    HxVBoxDisplayFrameBuffer* buffer = (HxVBoxDisplayFrameBuffer*)malloc(sizeof(HxVBoxDisplayFrameBuffer));
+    if (buffer) {
+        buffer->success = 0;
+        buffer->displayIndex = displayIndex;
+        buffer->width = 0;
+        buffer->height = 0;
+        buffer->bitsPerPixel = 0;
+        buffer->bytesPerLine = 0;
+        strcpy(buffer->pixelFormat, "");
+        strcpy(buffer->pixelDataPtr, "0x0");
+        buffer->bufferSize = 0;
+        buffer->isValid = 0;
+        buffer->usesHardwareAcceleration = 0;
+        buffer->isUpdating = 0;
+        buffer->vSyncEnabled = 0;
+        buffer->lastUpdateTime = 0;
+        buffer->errorCode = -1;
+        strcpy(buffer->errorMessage, "Frame buffer access not yet implemented");
+    }
+    return buffer;
+}
+
+void hx_vbox_remote_display_info_free(HxVBoxRemoteDisplayInfo* info) {
+    if (info) {
+        free(info);
+    }
+}
+
+void hx_vbox_display_framebuffer_free(HxVBoxDisplayFrameBuffer* buffer) {
+    if (buffer) {
+        free(buffer);
+    }
+}

@@ -16,6 +16,8 @@ import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapter;
 import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapterList;
 import digigun.virt.virtualbox.raw.Types.NativeVirtualNetwork;
 import digigun.virt.virtualbox.raw.Types.NativeVirtualNetworkList;
+import digigun.virt.virtualbox.raw.Types.NativeRemoteDisplayInfo;
+import digigun.virt.virtualbox.raw.Types.NativeDisplayFrameBuffer;
 #end
 
 /// Version and API information for the installed VirtualBox
@@ -1212,6 +1214,124 @@ class VirtualBox {
         return result;
         #else
         throw new ConnectionError("Virtual network access requires C++ backend");
+        #end
+    }
+
+    /**
+     * Get remote display (RDP/VNC) information for a machine.
+     * 
+     * Provides access to remote display ports and configuration, allowing connections
+     * via RDP or VNC for headless VMs or remote management.
+     * 
+     * @param machine The VM to query
+     * @return RemoteDisplayInfo object with RDP/VNC configuration
+     * @throws MachineError If machine lookup fails or operation fails
+     * 
+     * Example:
+     * ```haxe
+     * var vm = vbox.findMachine("myvm");
+     * var display = vbox.getRemoteDisplayInfo(vm);
+     * if (display.vncEnabled) {
+     *     trace('Connect via VNC: ${display.vncAddress}:${display.vncPort}');
+     * }
+     * ```
+     */
+    public function getRemoteDisplayInfo(machine:Machine):RemoteDisplayInfo {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var raw = Native.getRemoteDisplayInfo(handle, machine.id);
+        ErrorHelper.checkPointerOrThrow(raw, "getRemoteDisplayInfo");
+        
+        var info = Pointer.fromRaw(raw).ref;
+        if (info.success == 0) {
+            Native.remoteDisplayInfoFree(raw);
+            throw new MachineError('Failed to get remote display info: ${info.errorMessage}');
+        }
+        
+        var result = new RemoteDisplayInfo(
+            info.rdpEnabled != 0,
+            info.rdpPort > 0 ? info.rdpPort : null,
+            info.vncEnabled != 0,
+            info.vncPort > 0 ? info.vncPort : null,
+            info.vncAddress.length > 0 ? info.vncAddress : null,
+            info.displayWidth,
+            info.displayHeight,
+            info.displayBitDepth,
+            info.guestResizableDisplay != 0,
+            info.displayId
+        );
+        
+        Native.remoteDisplayInfoFree(raw);
+        return result;
+        #else
+        throw new ConnectionError("Remote display access requires C++ backend");
+        #end
+    }
+
+    /**
+     * Get frame buffer information for direct pixel access to a display.
+     * 
+     * Provides access to raw pixel data for custom rendering, screenshot capture,
+     * or integration with UI frameworks. The frame buffer must be valid (VM running,
+     * display enabled) before pixel data can be accessed.
+     * 
+     * @param machine The VM to query
+     * @param displayIndex Display number (0 for primary, 1+ for additional monitors)
+     * @return DisplayFrameBuffer object with pixel buffer information
+     * @throws MachineError If machine lookup fails or operation fails
+     * 
+     * Example:
+     * ```haxe
+     * var vm = vbox.findMachine("myvm");
+     * var fb = vbox.getDisplayFrameBuffer(vm, 0);
+     * if (fb.isValid) {
+     *     trace('Resolution: ${fb.getResolution()}');
+     *     trace('Format: ${fb.getColorFormatDescription()}');
+     * }
+     * ```
+     */
+    public function getDisplayFrameBuffer(machine:Machine, displayIndex:Int = 0):DisplayFrameBuffer {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        if (displayIndex < 0 || displayIndex > 15) {
+            throw new MachineError('Invalid display index: ${displayIndex} (must be 0-15)');
+        }
+        
+        var raw = Native.getDisplayFrameBuffer(handle, machine.id, displayIndex);
+        ErrorHelper.checkPointerOrThrow(raw, "getDisplayFrameBuffer");
+        
+        var buffer = Pointer.fromRaw(raw).ref;
+        if (buffer.success == 0) {
+            Native.displayFrameBufferFree(raw);
+            throw new MachineError('Failed to get frame buffer: ${buffer.errorMessage}');
+        }
+        
+        var result = new DisplayFrameBuffer(
+            buffer.displayIndex,
+            buffer.width,
+            buffer.height,
+            buffer.bitsPerPixel,
+            buffer.bytesPerLine,
+            buffer.pixelFormat,
+            buffer.pixelDataPtr,
+            buffer.bufferSize,
+            buffer.isValid != 0,
+            buffer.usesHardwareAcceleration != 0,
+            buffer.isUpdating != 0,
+            buffer.vSyncEnabled != 0,
+            buffer.lastUpdateTime
+        );
+        
+        Native.displayFrameBufferFree(raw);
+        return result;
+        #else
+        throw new ConnectionError("Display frame buffer access requires C++ backend");
         #end
     }
 }

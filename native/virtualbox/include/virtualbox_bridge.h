@@ -334,3 +334,44 @@ void hx_vbox_network_adapter_free(HxVBoxNetworkAdapter* adapter);
 void hx_vbox_network_adapter_list_free(HxVBoxNetworkAdapterList* list);
 void hx_vbox_virtual_network_free(HxVBoxVirtualNetwork* network);
 void hx_vbox_virtual_network_list_free(HxVBoxVirtualNetworkList* list);
+
+typedef struct HxVBoxRemoteDisplayInfo {
+    int success;
+    int rdpEnabled;
+    int rdpPort;
+    int vncEnabled;
+    int vncPort;
+    char vncAddress[256];
+    int displayWidth;
+    int displayHeight;
+    int displayBitDepth;
+    int guestResizableDisplay;
+    char displayId[64];
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxRemoteDisplayInfo;
+
+typedef struct HxVBoxDisplayFrameBuffer {
+    int success;
+    int displayIndex;
+    int width;
+    int height;
+    int bitsPerPixel;
+    int bytesPerLine;
+    char pixelFormat[64];
+    char pixelDataPtr[64];
+    int bufferSize;
+    int isValid;
+    int usesHardwareAcceleration;
+    int isUpdating;
+    int vSyncEnabled;
+    int lastUpdateTime;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxDisplayFrameBuffer;
+
+// Display operations
+HxVBoxRemoteDisplayInfo* hx_vbox_get_remote_display_info(void* ctx, const char* machineId);
+HxVBoxDisplayFrameBuffer* hx_vbox_get_display_framebuffer(void* ctx, const char* machineId, int displayIndex);
+void hx_vbox_remote_display_info_free(HxVBoxRemoteDisplayInfo* info);
+void hx_vbox_display_framebuffer_free(HxVBoxDisplayFrameBuffer* buffer);

@@ -24,6 +24,9 @@ import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapter;
 import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapterList;
 import digigun.virt.virtualbox.raw.Types.NativeVirtualNetwork;
 import digigun.virt.virtualbox.raw.Types.NativeVirtualNetworkList;
+import digigun.virt.virtualbox.raw.Types.NativeRemoteDisplayInfo;
+import digigun.virt.virtualbox.raw.Types.NativeDisplayFrameBuffer;
+
 
 @:include("virtualbox_bridge.h")
 @:noDoc
@@ -207,5 +210,18 @@ extern class Native {
 
     @:native("hx_vbox_virtual_network_list_free")
     static function virtualNetworkListFree(list:cpp.RawPointer<NativeVirtualNetworkList>):Void;
+
+    // Display operations
+    @:native("hx_vbox_get_remote_display_info")
+    static function getRemoteDisplayInfo(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar):cpp.RawPointer<NativeRemoteDisplayInfo>;
+
+    @:native("hx_vbox_get_display_framebuffer")
+    static function getDisplayFrameBuffer(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar, displayIndex:Int):cpp.RawPointer<NativeDisplayFrameBuffer>;
+
+    @:native("hx_vbox_remote_display_info_free")
+    static function remoteDisplayInfoFree(info:cpp.RawPointer<NativeRemoteDisplayInfo>):Void;
+
+    @:native("hx_vbox_display_framebuffer_free")
+    static function displayFrameBufferFree(buffer:cpp.RawPointer<NativeDisplayFrameBuffer>):Void;
 }
 #end

@@ -339,4 +339,47 @@ extern class NativeVirtualNetworkList {
 	@:native("errorCode") var errorCode:Int;
 	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
 }
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxRemoteDisplayInfo")
+@:structAccess
+@:noDoc
+extern class NativeRemoteDisplayInfo {
+	@:native("success") var success:Int;
+	@:native("rdpEnabled") var rdpEnabled:Int;
+	@:native("rdpPort") var rdpPort:Int;
+	@:native("vncEnabled") var vncEnabled:Int;
+	@:native("vncPort") var vncPort:Int;
+	@:native("vncAddress") var vncAddress:cpp.ConstCharStar;
+	@:native("displayWidth") var displayWidth:Int;
+	@:native("displayHeight") var displayHeight:Int;
+	@:native("displayBitDepth") var displayBitDepth:Int;
+	@:native("guestResizableDisplay") var guestResizableDisplay:Int;
+	@:native("displayId") var displayId:cpp.ConstCharStar;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxDisplayFrameBuffer")
+@:structAccess
+@:noDoc
+extern class NativeDisplayFrameBuffer {
+	@:native("success") var success:Int;
+	@:native("displayIndex") var displayIndex:Int;
+	@:native("width") var width:Int;
+	@:native("height") var height:Int;
+	@:native("bitsPerPixel") var bitsPerPixel:Int;
+	@:native("bytesPerLine") var bytesPerLine:Int;
+	@:native("pixelFormat") var pixelFormat:cpp.ConstCharStar;
+	@:native("pixelDataPtr") var pixelDataPtr:cpp.ConstCharStar;
+	@:native("bufferSize") var bufferSize:Int;
+	@:native("isValid") var isValid:Int;
+	@:native("usesHardwareAcceleration") var usesHardwareAcceleration:Int;
+	@:native("isUpdating") var isUpdating:Int;
+	@:native("vSyncEnabled") var vSyncEnabled:Int;
+	@:native("lastUpdateTime") var lastUpdateTime:Int;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
 #end
