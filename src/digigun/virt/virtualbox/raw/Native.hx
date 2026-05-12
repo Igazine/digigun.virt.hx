@@ -20,6 +20,10 @@ import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
 import digigun.virt.virtualbox.raw.Types.NativeEvent;
 import digigun.virt.virtualbox.raw.Types.NativeEventSubscription;
 import digigun.virt.virtualbox.raw.Types.NativeCloneResult;
+import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapter;
+import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapterList;
+import digigun.virt.virtualbox.raw.Types.NativeVirtualNetwork;
+import digigun.virt.virtualbox.raw.Types.NativeVirtualNetworkList;
 
 @:include("virtualbox_bridge.h")
 @:noDoc
@@ -181,5 +185,27 @@ extern class Native {
 
     @:native("hx_vbox_clone_result_free")
     static function cloneResultFree(result:cpp.RawPointer<NativeCloneResult>):Void;
+
+    // Network operations
+    @:native("hx_vbox_get_network_adapters")
+    static function getNetworkAdapters(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar):cpp.RawPointer<NativeNetworkAdapterList>;
+
+    @:native("hx_vbox_set_network_adapter")
+    static function setNetworkAdapter(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar, slot:Int, adapterType:cpp.ConstCharStar, attachmentType:cpp.ConstCharStar, networkName:cpp.ConstCharStar):cpp.RawPointer<NativeNetworkAdapter>;
+
+    @:native("hx_vbox_get_virtual_networks")
+    static function getVirtualNetworks(ctx:cpp.RawPointer<cpp.Void>):cpp.RawPointer<NativeVirtualNetworkList>;
+
+    @:native("hx_vbox_network_adapter_free")
+    static function networkAdapterFree(adapter:cpp.RawPointer<NativeNetworkAdapter>):Void;
+
+    @:native("hx_vbox_network_adapter_list_free")
+    static function networkAdapterListFree(list:cpp.RawPointer<NativeNetworkAdapterList>):Void;
+
+    @:native("hx_vbox_virtual_network_free")
+    static function virtualNetworkFree(network:cpp.RawPointer<NativeVirtualNetwork>):Void;
+
+    @:native("hx_vbox_virtual_network_list_free")
+    static function virtualNetworkListFree(list:cpp.RawPointer<NativeVirtualNetworkList>):Void;
 }
 #end

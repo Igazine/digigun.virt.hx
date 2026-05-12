@@ -283,3 +283,54 @@ HxVBoxErrorInfo* hx_vbox_get_last_error(void);
 #endif
 
 #endif
+
+typedef struct HxVBoxNetworkAdapter {
+    int success;
+    int slot;
+    char adapterType[64];
+    char attachmentType[64];
+    char networkName[256];
+    char macAddress[64];
+    int enabled;
+    int cableConnected;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxNetworkAdapter;
+
+typedef struct HxVBoxNetworkAdapterList {
+    int success;
+    int count;
+    HxVBoxNetworkAdapter** adapters;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxNetworkAdapterList;
+
+typedef struct HxVBoxVirtualNetwork {
+    int success;
+    char name[256];
+    char networkCIDR[64];
+    char broadcastAddress[64];
+    int dhcpEnabled;
+    char dhcpLowerIP[64];
+    char dhcpUpperIP[64];
+    char networkType[64];
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxVirtualNetwork;
+
+typedef struct HxVBoxVirtualNetworkList {
+    int success;
+    int count;
+    HxVBoxVirtualNetwork** networks;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxVirtualNetworkList;
+
+// Network operations
+HxVBoxNetworkAdapterList* hx_vbox_get_network_adapters(void* ctx, const char* machineId);
+HxVBoxNetworkAdapter* hx_vbox_set_network_adapter(void* ctx, const char* machineId, int slot, const char* adapterType, const char* attachmentType, const char* networkName);
+HxVBoxVirtualNetworkList* hx_vbox_get_virtual_networks(void* ctx);
+void hx_vbox_network_adapter_free(HxVBoxNetworkAdapter* adapter);
+void hx_vbox_network_adapter_list_free(HxVBoxNetworkAdapterList* list);
+void hx_vbox_virtual_network_free(HxVBoxVirtualNetwork* network);
+void hx_vbox_virtual_network_list_free(HxVBoxVirtualNetworkList* list);

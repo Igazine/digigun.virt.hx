@@ -12,6 +12,10 @@ import digigun.virt.virtualbox.raw.Types.NativeHostInfo;
 import digigun.virt.virtualbox.raw.Types.NativeProcessorInfo;
 import digigun.virt.virtualbox.raw.Types.NativeResourceMetrics;
 import digigun.virt.virtualbox.raw.Types.NativeCloneResult;
+import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapter;
+import digigun.virt.virtualbox.raw.Types.NativeNetworkAdapterList;
+import digigun.virt.virtualbox.raw.Types.NativeVirtualNetwork;
+import digigun.virt.virtualbox.raw.Types.NativeVirtualNetworkList;
 #end
 
 /// Version and API information for the installed VirtualBox
@@ -1019,6 +1023,196 @@ class VirtualBox {
     **/
     public static function createCriticalEventListener(callback:HostEvent -> Void):EventListener {
         return EventListener.critical(callback);
+    }
+
+    /**
+     * Get all network adapters configured for a machine.
+     * 
+     * Retrieves the network adapter configuration for all 4 slots of a VM.
+     * Adapters may be disabled (attachmentType = NotAttached).
+     * 
+     * @param machine The VM to query
+     * @return Array of NetworkAdapter objects
+     * @throws MachineError If machine lookup fails or operation fails
+     * 
+     * Example:
+     * ```haxe
+     * var adapters = vbox.getNetworkAdapters(vm);
+     * for (adapter in adapters) {
+     *     if (adapter.enabled) {
+     *         trace('Adapter ${adapter.slot}: ${adapter.description()}');
+     *     }
+     * }
+     * ```
+     */
+    public function getNetworkAdapters(machine:Machine):Array<NetworkAdapter> {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var raw = Native.getNetworkAdapters(handle, machine.id);
+        ErrorHelper.checkPointerOrThrow(raw, "getNetworkAdapters");
+        
+        var list = Pointer.fromRaw(raw).ref;
+        if (list.success == 0) {
+            Native.networkAdapterListFree(raw);
+            throw new MachineError('Failed to get network adapters: ${list.errorMessage}');
+        }
+        
+        var result:Array<NetworkAdapter> = [];
+        for (i in 0...list.count) {
+            var adapter = list.adapters[i].ref;
+            result.push(new NetworkAdapter(
+                adapter.slot,
+                cast adapter.adapterType,
+                cast adapter.attachmentType,
+                adapter.networkName.length > 0 ? adapter.networkName : null,
+                adapter.macAddress.length > 0 ? adapter.macAddress : null,
+                adapter.enabled != 0,
+                adapter.cableConnected != 0
+            ));
+        }
+        
+        Native.networkAdapterListFree(raw);
+        return result;
+        #else
+        throw new ConnectionError("Network adapter access requires C++ backend");
+        #end
+    }
+
+    /**
+     * Configure a network adapter on a machine.
+     * 
+     * Sets up a network adapter at the specified slot. The network name is required
+     * for certain attachment types:
+     * - Bridged: network name is host interface (e.g., "en0", "eth0")
+     * - HostOnly: network name is host-only network (e.g., "vboxnet0")
+     * - Internal: network name is internal network name (arbitrary string)
+     * - NATNetwork: network name is NAT network name
+     * - Cloud: network name is cloud network name
+     * 
+     * Other attachment types (NAT, Generic, NotAttached) ignore the network name.
+     * 
+     * @param machine The VM to configure
+     * @param slot The adapter slot (0-3)
+     * @param adapterType The hardware type
+     * @param attachmentType The connection type
+     * @param networkName Optional network name (required for Bridged, HostOnly, Internal)
+     * @return Configured NetworkAdapter
+     * @throws MachineError If slot is invalid or configuration fails
+     * 
+     * Example:
+     * ```haxe
+     * // Set slot 0 to NAT
+     * var adapter = vbox.setNetworkAdapter(vm, 0, I82540EM, NAT);
+     * 
+     * // Set slot 1 to Bridged on en0
+     * var bridged = vbox.setNetworkAdapter(vm, 1, I82545EM, Bridged, "en0");
+     * ```
+     */
+    public function setNetworkAdapter(
+        machine:Machine,
+        slot:Int,
+        adapterType:NetworkAdapterType,
+        attachmentType:NetworkAttachmentType,
+        ?networkName:String
+    ):NetworkAdapter {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        // Create adapter to validate it
+        var adapter = new NetworkAdapter(slot, adapterType, attachmentType, networkName);
+        if (!adapter.isValid()) {
+            throw new MachineError('Invalid network adapter configuration: slot=${slot}, attachment=${attachmentType}');
+        }
+        
+        var netName = networkName != null ? networkName : "";
+        var raw = Native.setNetworkAdapter(handle, machine.id, slot, 
+            cast adapterType, cast attachmentType, netName);
+        ErrorHelper.checkPointerOrThrow(raw, "setNetworkAdapter");
+        
+        var result = Pointer.fromRaw(raw).ref;
+        if (result.success == 0) {
+            Native.networkAdapterFree(raw);
+            throw new MachineError('Failed to set network adapter: ${result.errorMessage}');
+        }
+        
+        var configured = new NetworkAdapter(
+            result.slot,
+            cast result.adapterType,
+            cast result.attachmentType,
+            result.networkName.length > 0 ? result.networkName : null,
+            result.macAddress.length > 0 ? result.macAddress : null,
+            result.enabled != 0,
+            result.cableConnected != 0
+        );
+        
+        Native.networkAdapterFree(raw);
+        return configured;
+        #else
+        throw new ConnectionError("Network adapter configuration requires C++ backend");
+        #end
+    }
+
+    /**
+     * Get all configured virtual networks on the host.
+     * 
+     * Retrieves all virtual networks defined in VirtualBox, including:
+     * - Host-only networks (vboxnet0, vboxnet1, etc.)
+     * - Internal networks (user-defined)
+     * - NAT networks (user-defined NAT with DHCP)
+     * 
+     * @return Array of VirtualNetwork objects
+     * @throws ConnectionError If VirtualBox connection is invalid
+     * 
+     * Example:
+     * ```haxe
+     * var networks = vbox.getVirtualNetworks();
+     * for (net in networks) {
+     *     trace('${net.name}: ${net.networkCIDR}');
+     *     if (net.dhcpEnabled) {
+     *         trace('  DHCP: ${net.dhcpLowerIP} - ${net.dhcpUpperIP}');
+     *     }
+     * }
+     * ```
+     */
+    public function getVirtualNetworks():Array<VirtualNetwork> {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var raw = Native.getVirtualNetworks(handle);
+        ErrorHelper.checkPointerOrThrow(raw, "getVirtualNetworks");
+        
+        var list = Pointer.fromRaw(raw).ref;
+        if (list.success == 0) {
+            Native.virtualNetworkListFree(raw);
+            throw new ConnectionError('Failed to get virtual networks: ${list.errorMessage}');
+        }
+        
+        var result:Array<VirtualNetwork> = [];
+        for (i in 0...list.count) {
+            var network = list.networks[i].ref;
+            result.push(new VirtualNetwork(
+                network.name,
+                network.networkCIDR.length > 0 ? network.networkCIDR : null,
+                network.broadcastAddress.length > 0 ? network.broadcastAddress : null,
+                network.dhcpEnabled != 0,
+                network.dhcpLowerIP.length > 0 ? network.dhcpLowerIP : null,
+                network.dhcpUpperIP.length > 0 ? network.dhcpUpperIP : null,
+                network.networkType.length > 0 ? network.networkType : "Unknown"
+            ));
+        }
+        
+        Native.virtualNetworkListFree(raw);
+        return result;
+        #else
+        throw new ConnectionError("Virtual network access requires C++ backend");
+        #end
     }
 }
 

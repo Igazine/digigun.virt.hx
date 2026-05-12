@@ -281,4 +281,62 @@ extern class NativeCloneResult {
 	@:native("errorCode") var errorCode:Int;
 	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
 }
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxNetworkAdapter")
+@:structAccess
+@:noDoc
+extern class NativeNetworkAdapter {
+	@:native("success") var success:Int;
+	@:native("slot") var slot:Int;
+	@:native("adapterType") var adapterType:cpp.ConstCharStar;
+	@:native("attachmentType") var attachmentType:cpp.ConstCharStar;
+	@:native("networkName") var networkName:cpp.ConstCharStar;
+	@:native("macAddress") var macAddress:cpp.ConstCharStar;
+	@:native("enabled") var enabled:Int;
+	@:native("cableConnected") var cableConnected:Int;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxNetworkAdapterList")
+@:structAccess
+@:noDoc
+extern class NativeNetworkAdapterList {
+	@:native("success") var success:Int;
+	@:native("count") var count:Int;
+	@:native("adapters") var adapters:cpp.RawPointer<cpp.RawPointer<NativeNetworkAdapter>>;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxVirtualNetwork")
+@:structAccess
+@:noDoc
+extern class NativeVirtualNetwork {
+	@:native("success") var success:Int;
+	@:native("name") var name:cpp.ConstCharStar;
+	@:native("networkCIDR") var networkCIDR:cpp.ConstCharStar;
+	@:native("broadcastAddress") var broadcastAddress:cpp.ConstCharStar;
+	@:native("dhcpEnabled") var dhcpEnabled:Int;
+	@:native("dhcpLowerIP") var dhcpLowerIP:cpp.ConstCharStar;
+	@:native("dhcpUpperIP") var dhcpUpperIP:cpp.ConstCharStar;
+	@:native("networkType") var networkType:cpp.ConstCharStar;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxVirtualNetworkList")
+@:structAccess
+@:noDoc
+extern class NativeVirtualNetworkList {
+	@:native("success") var success:Int;
+	@:native("count") var count:Int;
+	@:native("networks") var networks:cpp.RawPointer<cpp.RawPointer<NativeVirtualNetwork>>;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
 #end

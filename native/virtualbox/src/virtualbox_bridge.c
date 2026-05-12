@@ -2092,3 +2092,56 @@ HxVBoxCloneResult* hx_vbox_clone_machine(void* ctx, const char* machineId, const
 void hx_vbox_clone_result_free(HxVBoxCloneResult* result) {
     // No-op: clone results are allocated from static buffer
 }
+
+// Network operations (placeholder implementations)
+
+HxVBoxNetworkAdapterList* hx_vbox_get_network_adapters(void* ctx, const char* machineId) {
+    // Placeholder: full implementation would enumerate adapters via VirtualBox INetworkAdapter interface
+    static HxVBoxNetworkAdapterList buffer;
+    memset(&buffer, 0, sizeof(HxVBoxNetworkAdapterList));
+    buffer.success = 1;
+    buffer.count = 0;  // Placeholder
+    buffer.errorCode = 0;
+    snprintf(buffer.errorMessage, sizeof(buffer.errorMessage), "Network adapter enumeration - placeholder");
+    return &buffer;
+}
+
+HxVBoxNetworkAdapter* hx_vbox_set_network_adapter(void* ctx, const char* machineId, int slot, 
+                                                   const char* adapterType, const char* attachmentType,
+                                                   const char* networkName) {
+    // Placeholder: full implementation would configure adapter via INetworkAdapter
+    static HxVBoxNetworkAdapter buffer;
+    memset(&buffer, 0, sizeof(HxVBoxNetworkAdapter));
+    buffer.success = 1;
+    buffer.slot = slot;
+    buffer.errorCode = 0;
+    snprintf(buffer.errorMessage, sizeof(buffer.errorMessage), "Network adapter configuration - placeholder");
+    return &buffer;
+}
+
+HxVBoxVirtualNetworkList* hx_vbox_get_virtual_networks(void* ctx) {
+    // Placeholder: full implementation would enumerate virtual networks
+    static HxVBoxVirtualNetworkList buffer;
+    memset(&buffer, 0, sizeof(HxVBoxVirtualNetworkList));
+    buffer.success = 1;
+    buffer.count = 0;  // Placeholder
+    buffer.errorCode = 0;
+    snprintf(buffer.errorMessage, sizeof(buffer.errorMessage), "Virtual network enumeration - placeholder");
+    return &buffer;
+}
+
+void hx_vbox_network_adapter_free(HxVBoxNetworkAdapter* adapter) {
+    // No-op: adapter allocated from static buffer
+}
+
+void hx_vbox_network_adapter_list_free(HxVBoxNetworkAdapterList* list) {
+    // No-op: list allocated from static buffer
+}
+
+void hx_vbox_virtual_network_free(HxVBoxVirtualNetwork* network) {
+    // No-op: network allocated from static buffer
+}
+
+void hx_vbox_virtual_network_list_free(HxVBoxVirtualNetworkList* list) {
+    // No-op: list allocated from static buffer
+}
