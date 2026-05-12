@@ -26,6 +26,10 @@ import digigun.virt.virtualbox.raw.Types.NativeVirtualNetwork;
 import digigun.virt.virtualbox.raw.Types.NativeVirtualNetworkList;
 import digigun.virt.virtualbox.raw.Types.NativeRemoteDisplayInfo;
 import digigun.virt.virtualbox.raw.Types.NativeDisplayFrameBuffer;
+import digigun.virt.virtualbox.raw.Types.NativeUSBDevice;
+import digigun.virt.virtualbox.raw.Types.NativeUSBDeviceList;
+import digigun.virt.virtualbox.raw.Types.NativeUSBFilter;
+
 
 
 @:include("virtualbox_bridge.h")
@@ -223,5 +227,27 @@ extern class Native {
 
     @:native("hx_vbox_display_framebuffer_free")
     static function displayFrameBufferFree(buffer:cpp.RawPointer<NativeDisplayFrameBuffer>):Void;
+
+    // USB operations
+    @:native("hx_vbox_get_usb_devices")
+    static function getUSBDevices(ctx:cpp.RawPointer<cpp.Void>):cpp.RawPointer<NativeUSBDeviceList>;
+
+    @:native("hx_vbox_attach_usb_device")
+    static function attachUSBDevice(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar, deviceId:cpp.ConstCharStar):cpp.RawPointer<NativeUSBDevice>;
+
+    @:native("hx_vbox_detach_usb_device")
+    static function detachUSBDevice(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar, deviceId:cpp.ConstCharStar):Int;
+
+    @:native("hx_vbox_create_usb_filter")
+    static function createUSBFilter(ctx:cpp.RawPointer<cpp.Void>, machineId:cpp.ConstCharStar, filterName:cpp.ConstCharStar, vendorPattern:cpp.ConstCharStar, productPattern:cpp.ConstCharStar):cpp.RawPointer<NativeUSBFilter>;
+
+    @:native("hx_vbox_usb_device_free")
+    static function usbDeviceFree(device:cpp.RawPointer<NativeUSBDevice>):Void;
+
+    @:native("hx_vbox_usb_device_list_free")
+    static function usbDeviceListFree(list:cpp.RawPointer<NativeUSBDeviceList>):Void;
+
+    @:native("hx_vbox_usb_filter_free")
+    static function usbFilterFree(filter:cpp.RawPointer<NativeUSBFilter>):Void;
 }
 #end

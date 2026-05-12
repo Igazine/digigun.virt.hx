@@ -2201,3 +2201,88 @@ void hx_vbox_display_framebuffer_free(HxVBoxDisplayFrameBuffer* buffer) {
         free(buffer);
     }
 }
+
+// USB operations
+HxVBoxUSBDeviceList* hx_vbox_get_usb_devices(void* ctx) {
+    HxVBoxUSBDeviceList* list = (HxVBoxUSBDeviceList*)malloc(sizeof(HxVBoxUSBDeviceList));
+    if (list) {
+        list->success = 0;
+        list->count = 0;
+        list->devices = NULL;
+        list->errorCode = -1;
+        strcpy(list->errorMessage, "USB device enumeration not yet implemented");
+    }
+    return list;
+}
+
+HxVBoxUSBDevice* hx_vbox_attach_usb_device(void* ctx, const char* machineId, const char* deviceId) {
+    HxVBoxUSBDevice* device = (HxVBoxUSBDevice*)malloc(sizeof(HxVBoxUSBDevice));
+    if (device) {
+        device->success = 0;
+        device->vendorId = 0;
+        device->productId = 0;
+        strcpy(device->name, "");
+        strcpy(device->serialNumber, "");
+        strcpy(device->address, "");
+        device->port = 0;
+        device->isAvailable = 0;
+        device->usbVersion = 0;
+        device->classCode = 0;
+        device->subclassCode = 0;
+        device->protocolCode = 0;
+        strcpy(device->deviceId, "");
+        device->errorCode = -1;
+        strcpy(device->errorMessage, "USB device attachment not yet implemented");
+    }
+    return device;
+}
+
+int hx_vbox_detach_usb_device(void* ctx, const char* machineId, const char* deviceId) {
+    return -1;  // Not implemented
+}
+
+HxVBoxUSBFilter* hx_vbox_create_usb_filter(void* ctx, const char* machineId, const char* filterName, const char* vendorPattern, const char* productPattern) {
+    HxVBoxUSBFilter* filter = (HxVBoxUSBFilter*)malloc(sizeof(HxVBoxUSBFilter));
+    if (filter) {
+        filter->success = 0;
+        strcpy(filter->name, filterName ? filterName : "");
+        strcpy(filter->vendorIdPattern, vendorPattern ? vendorPattern : "");
+        strcpy(filter->productIdPattern, productPattern ? productPattern : "");
+        strcpy(filter->serialNumberPattern, "");
+        strcpy(filter->namePattern, "");
+        strcpy(filter->portPattern, "");
+        strcpy(filter->classPattern, "");
+        filter->remote = 0;
+        filter->enabled = 1;
+        strcpy(filter->filterId, "");
+        filter->errorCode = -1;
+        strcpy(filter->errorMessage, "USB filter creation not yet implemented");
+    }
+    return filter;
+}
+
+void hx_vbox_usb_device_free(HxVBoxUSBDevice* device) {
+    if (device) {
+        free(device);
+    }
+}
+
+void hx_vbox_usb_device_list_free(HxVBoxUSBDeviceList* list) {
+    if (list) {
+        if (list->devices) {
+            for (int i = 0; i < list->count; i++) {
+                if (list->devices[i]) {
+                    free(list->devices[i]);
+                }
+            }
+            free(list->devices);
+        }
+        free(list);
+    }
+}
+
+void hx_vbox_usb_filter_free(HxVBoxUSBFilter* filter) {
+    if (filter) {
+        free(filter);
+    }
+}

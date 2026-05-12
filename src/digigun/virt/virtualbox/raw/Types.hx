@@ -382,4 +382,58 @@ extern class NativeDisplayFrameBuffer {
 	@:native("errorCode") var errorCode:Int;
 	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
 }
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxUSBDevice")
+@:structAccess
+@:noDoc
+extern class NativeUSBDevice {
+	@:native("success") var success:Int;
+	@:native("vendorId") var vendorId:Int;
+	@:native("productId") var productId:Int;
+	@:native("name") var name:cpp.ConstCharStar;
+	@:native("serialNumber") var serialNumber:cpp.ConstCharStar;
+	@:native("address") var address:cpp.ConstCharStar;
+	@:native("port") var port:Int;
+	@:native("isAvailable") var isAvailable:Int;
+	@:native("usbVersion") var usbVersion:Int;
+	@:native("classCode") var classCode:Int;
+	@:native("subclassCode") var subclassCode:Int;
+	@:native("protocolCode") var protocolCode:Int;
+	@:native("deviceId") var deviceId:cpp.ConstCharStar;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxUSBDeviceList")
+@:structAccess
+@:noDoc
+extern class NativeUSBDeviceList {
+	@:native("success") var success:Int;
+	@:native("count") var count:Int;
+	@:native("devices") var devices:cpp.RawPointer<cpp.RawPointer<NativeUSBDevice>>;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
+
+@:include("virtualbox_bridge.h")
+@:native("HxVBoxUSBFilter")
+@:structAccess
+@:noDoc
+extern class NativeUSBFilter {
+	@:native("success") var success:Int;
+	@:native("name") var name:cpp.ConstCharStar;
+	@:native("vendorIdPattern") var vendorIdPattern:cpp.ConstCharStar;
+	@:native("productIdPattern") var productIdPattern:cpp.ConstCharStar;
+	@:native("serialNumberPattern") var serialNumberPattern:cpp.ConstCharStar;
+	@:native("namePattern") var namePattern:cpp.ConstCharStar;
+	@:native("portPattern") var portPattern:cpp.ConstCharStar;
+	@:native("classPattern") var classPattern:cpp.ConstCharStar;
+	@:native("remote") var remote:Int;
+	@:native("enabled") var enabled:Int;
+	@:native("filterId") var filterId:cpp.ConstCharStar;
+	@:native("errorCode") var errorCode:Int;
+	@:native("errorMessage") var errorMessage:cpp.ConstCharStar;
+}
 #end

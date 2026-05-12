@@ -375,3 +375,54 @@ HxVBoxRemoteDisplayInfo* hx_vbox_get_remote_display_info(void* ctx, const char* 
 HxVBoxDisplayFrameBuffer* hx_vbox_get_display_framebuffer(void* ctx, const char* machineId, int displayIndex);
 void hx_vbox_remote_display_info_free(HxVBoxRemoteDisplayInfo* info);
 void hx_vbox_display_framebuffer_free(HxVBoxDisplayFrameBuffer* buffer);
+
+typedef struct HxVBoxUSBDevice {
+    int success;
+    int vendorId;
+    int productId;
+    char name[256];
+    char serialNumber[256];
+    char address[64];
+    int port;
+    int isAvailable;
+    int usbVersion;
+    int classCode;
+    int subclassCode;
+    int protocolCode;
+    char deviceId[64];
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxUSBDevice;
+
+typedef struct HxVBoxUSBDeviceList {
+    int success;
+    int count;
+    HxVBoxUSBDevice** devices;
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxUSBDeviceList;
+
+typedef struct HxVBoxUSBFilter {
+    int success;
+    char name[256];
+    char vendorIdPattern[64];
+    char productIdPattern[64];
+    char serialNumberPattern[256];
+    char namePattern[256];
+    char portPattern[64];
+    char classPattern[64];
+    int remote;
+    int enabled;
+    char filterId[64];
+    int errorCode;
+    char errorMessage[1024];
+} HxVBoxUSBFilter;
+
+// USB operations
+HxVBoxUSBDeviceList* hx_vbox_get_usb_devices(void* ctx);
+HxVBoxUSBDevice* hx_vbox_attach_usb_device(void* ctx, const char* machineId, const char* deviceId);
+int hx_vbox_detach_usb_device(void* ctx, const char* machineId, const char* deviceId);
+HxVBoxUSBFilter* hx_vbox_create_usb_filter(void* ctx, const char* machineId, const char* filterName, const char* vendorPattern, const char* productPattern);
+void hx_vbox_usb_device_free(HxVBoxUSBDevice* device);
+void hx_vbox_usb_device_list_free(HxVBoxUSBDeviceList* list);
+void hx_vbox_usb_filter_free(HxVBoxUSBFilter* filter);

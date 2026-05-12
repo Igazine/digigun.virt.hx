@@ -18,6 +18,9 @@ import digigun.virt.virtualbox.raw.Types.NativeVirtualNetwork;
 import digigun.virt.virtualbox.raw.Types.NativeVirtualNetworkList;
 import digigun.virt.virtualbox.raw.Types.NativeRemoteDisplayInfo;
 import digigun.virt.virtualbox.raw.Types.NativeDisplayFrameBuffer;
+import digigun.virt.virtualbox.raw.Types.NativeUSBDevice;
+import digigun.virt.virtualbox.raw.Types.NativeUSBDeviceList;
+import digigun.virt.virtualbox.raw.Types.NativeUSBFilter;
 #end
 
 /// Version and API information for the installed VirtualBox
@@ -1332,6 +1335,221 @@ class VirtualBox {
         return result;
         #else
         throw new ConnectionError("Display frame buffer access requires C++ backend");
+        #end
+    }
+
+    /**
+     * Get all USB devices available on the host system.
+     * 
+     * Lists all USB devices that can be attached to VMs, including:
+     * - Local USB devices (directly connected to host)
+     * - Remote USB devices (via network, if configured)
+     * - Devices already attached to other VMs (marked unavailable)
+     * 
+     * @return Array of USBDevice objects
+     * @throws ConnectionError If VirtualBox connection is invalid
+     * 
+     * Example:
+     * ```haxe
+     * var devices = vbox.getUSBDevices();
+     * for (device in devices) {
+     *     if (device.isAvailable) {
+     *         trace('${device.name} (${device.getUSBVersion()})');
+     *     }
+     * }
+     * ```
+     */
+    public function getUSBDevices():Array<USBDevice> {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var raw = Native.getUSBDevices(handle);
+        ErrorHelper.checkPointerOrThrow(raw, "getUSBDevices");
+        
+        var list = Pointer.fromRaw(raw).ref;
+        if (list.success == 0) {
+            Native.usbDeviceListFree(raw);
+            throw new ConnectionError('Failed to get USB devices: ${list.errorMessage}');
+        }
+        
+        var result:Array<USBDevice> = [];
+        for (i in 0...list.count) {
+            var device = list.devices[i].ref;
+            result.push(new USBDevice(
+                device.vendorId,
+                device.productId,
+                device.name,
+                device.serialNumber.length > 0 ? device.serialNumber : null,
+                device.address,
+                device.port,
+                device.isAvailable != 0,
+                device.usbVersion,
+                device.classCode,
+                device.subclassCode,
+                device.protocolCode,
+                device.deviceId
+            ));
+        }
+        
+        Native.usbDeviceListFree(raw);
+        return result;
+        #else
+        throw new ConnectionError("USB device access requires C++ backend");
+        #end
+    }
+
+    /**
+     * Attach a USB device to a virtual machine.
+     * 
+     * Attaches a specific USB device to a VM. The device must be available
+     * (not already attached to another VM or reserved by host).
+     * 
+     * This is temporary attachment - device remains attached until VM is powered off.
+     * For permanent attachment, use createUSBFilter() instead.
+     * 
+     * @param machine The VM to attach device to
+     * @param device The USB device to attach
+     * @return Attached USBDevice info
+     * @throws MachineError If device unavailable or attachment fails
+     * 
+     * Example:
+     * ```haxe
+     * var devices = vbox.getUSBDevices();
+     * var mouse = devices.find(d -> d.name.indexOf("Mouse") >= 0);
+     * if (mouse != null && mouse.isAvailable) {
+     *     vbox.attachUSBDevice(vm, mouse);
+     * }
+     * ```
+     */
+    public function attachUSBDevice(machine:Machine, device:USBDevice):USBDevice {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        if (!device.isAvailable) {
+            throw new MachineError('USB device not available: ${device.description()}');
+        }
+        
+        var raw = Native.attachUSBDevice(handle, machine.id, device.deviceId);
+        ErrorHelper.checkPointerOrThrow(raw, "attachUSBDevice");
+        
+        var result = Pointer.fromRaw(raw).ref;
+        if (result.success == 0) {
+            Native.usbDeviceFree(raw);
+            throw new MachineError('Failed to attach USB device: ${result.errorMessage}');
+        }
+        
+        var attached = new USBDevice(
+            result.vendorId,
+            result.productId,
+            result.name,
+            result.serialNumber.length > 0 ? result.serialNumber : null,
+            result.address,
+            result.port,
+            result.isAvailable != 0,
+            result.usbVersion,
+            result.classCode,
+            result.subclassCode,
+            result.protocolCode,
+            result.deviceId
+        );
+        
+        Native.usbDeviceFree(raw);
+        return attached;
+        #else
+        throw new ConnectionError("USB device attachment requires C++ backend");
+        #end
+    }
+
+    /**
+     * Detach a USB device from a virtual machine.
+     * 
+     * Removes a previously attached USB device from a VM.
+     * Device will become available for attachment to other VMs.
+     * 
+     * @param machine The VM to detach from
+     * @param deviceId The USB device ID to detach
+     * @return True if detachment succeeded
+     * @throws MachineError If detachment fails
+     * 
+     * Example:
+     * ```haxe
+     * vbox.detachUSBDevice(vm, deviceId);
+     * ```
+     */
+    public function detachUSBDevice(machine:Machine, deviceId:String):Bool {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var result = Native.detachUSBDevice(handle, machine.id, deviceId);
+        if (result < 0) {
+            throw new MachineError('Failed to detach USB device: ${deviceId}');
+        }
+        
+        return result == 0;
+        #else
+        throw new ConnectionError("USB device detachment requires C++ backend");
+        #end
+    }
+
+    /**
+     * Create a USB filter for automatic device attachment.
+     * 
+     * Creates a filter that automatically attaches matching USB devices to a VM
+     * when they are plugged into the host. Filters persist across VM restarts.
+     * 
+     * @param machine The VM to create filter for
+     * @param filter The USB filter configuration
+     * @return Created USBFilter info
+     * @throws MachineError If filter creation fails
+     * 
+     * Example:
+     * ```haxe
+     * // Auto-attach all Logitech devices
+     * var filter = new USBFilter("Logitech", "046D", null);
+     * vbox.createUSBFilter(vm, filter);
+     * ```
+     */
+    public function createUSBFilter(machine:Machine, filter:USBFilter):USBFilter {
+        #if cpp
+        if (handle == null) {
+            throw new ConnectionError("VirtualBox connection not open");
+        }
+        
+        var vendorPattern = filter.vendorIdPattern != null ? filter.vendorIdPattern : "";
+        var productPattern = filter.productIdPattern != null ? filter.productIdPattern : "";
+        
+        var raw = Native.createUSBFilter(handle, machine.id, filter.name, vendorPattern, productPattern);
+        ErrorHelper.checkPointerOrThrow(raw, "createUSBFilter");
+        
+        var result = Pointer.fromRaw(raw).ref;
+        if (result.success == 0) {
+            Native.usbFilterFree(raw);
+            throw new MachineError('Failed to create USB filter: ${result.errorMessage}');
+        }
+        
+        var created = new USBFilter(
+            result.name,
+            result.vendorIdPattern.length > 0 ? result.vendorIdPattern : null,
+            result.productIdPattern.length > 0 ? result.productIdPattern : null,
+            result.serialNumberPattern.length > 0 ? result.serialNumberPattern : null,
+            result.namePattern.length > 0 ? result.namePattern : null,
+            result.portPattern.length > 0 ? result.portPattern : null,
+            result.classPattern.length > 0 ? result.classPattern : null,
+            result.remote != 0,
+            result.enabled != 0,
+            result.filterId
+        );
+        
+        Native.usbFilterFree(raw);
+        return created;
+        #else
+        throw new ConnectionError("USB filter creation requires C++ backend");
         #end
     }
 }
